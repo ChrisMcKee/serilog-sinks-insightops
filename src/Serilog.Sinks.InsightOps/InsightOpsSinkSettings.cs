@@ -1,4 +1,4 @@
-using InsightCore.Net;
+using Serilog.Sinks.InsightOps.Rapid7;
 
 namespace Serilog.Sinks.InsightOps
 {
@@ -13,7 +13,7 @@ namespace Serilog.Sinks.InsightOps
         /// Supported Region's.
         /// </summary>
         /// <remarks>List: us, eu, ca, au, jp</remarks>
-        /// <see cref="https://insightops.help.rapid7.com/docs/rest-api-overview#section-supported-regions"/>
+        /// <see href="https://insightops.help.rapid7.com/docs/rest-api-overview#section-supported-regions"/>
         public string Region { get; set; }
 
         /// <inheritdoc />
@@ -38,6 +38,6 @@ namespace Serilog.Sinks.InsightOps
         public string HostName { get; set; }
 
         /// <inheritdoc />
-        public string LogID { get; set; }
+        public string LogId { get; set; }
     }
 }

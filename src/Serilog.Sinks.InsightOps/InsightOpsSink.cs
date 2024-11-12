@@ -1,9 +1,9 @@
 using System;
 using System.IO;
-using InsightCore.Net;
 using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting;
+using Serilog.Sinks.InsightOps.Rapid7;
 
 namespace Serilog.Sinks.InsightOps
 {
@@ -13,7 +13,7 @@ namespace Serilog.Sinks.InsightOps
         private readonly ITextFormatter _textFormatter;
 
         /// <summary>
-        /// The insightOps sink -> a service which sends log messages to insightOps.
+        /// The insightOps sink → a service which sends log messages to insightOps.
         /// </summary>
         /// <param name="config">insightOps settings.</param>
         /// <param name="textFormatter">Formats log events.</param>
@@ -29,31 +29,32 @@ namespace Serilog.Sinks.InsightOps
             ValidateToken(config.Token);
 
             _asyncLogger = new AsyncLogger();
-            _asyncLogger.setToken(config.Token);
-            _asyncLogger.setRegion(config.Region);
-            _asyncLogger.setUseSsl(config.UseSsl);
+            _asyncLogger.SetToken(config.Token);
+            _asyncLogger.SetRegion(config.Region);
+            _asyncLogger.SetUseSsl(config.UseSsl);
 
             // These options are more or less, not used.
-            _asyncLogger.setDebug(config.Debug);
-            _asyncLogger.setIsUsingDataHub(config.IsUsingDataHub);
-            _asyncLogger.setDataHubAddr(config.DataHubAddress);
-            _asyncLogger.setDataHubPort(config.DataHubPort);
-            _asyncLogger.setUseHostName(config.LogHostname);
-            _asyncLogger.setHostName(config.HostName);
-            _asyncLogger.setLogID(config.LogID);
+            _asyncLogger.SetDebug(config.Debug);
+            _asyncLogger.SetUseHostName(config.LogHostname);
+            _asyncLogger.SetHostName(config.HostName);
+            _asyncLogger.SetLogId(config.LogId);
+
+            if (!config.IsUsingDataHub) return;
+
+            _asyncLogger.SetIsUsingDataHub(config.IsUsingDataHub);
+            _asyncLogger.SetDataHubAddr(config.DataHubAddress);
+            _asyncLogger.SetDataHubPort(config.DataHubPort);
         }
 
         public void Emit(LogEvent logEvent)
         {
             if (logEvent == null)
-            {
                 throw new ArgumentNullException(nameof(logEvent));
-            }
 
             var stringWriter = new StringWriter();
-            _textFormatter.Format(logEvent, stringWriter);
 
-            _asyncLogger.AddLine(stringWriter.ToString());
+            _textFormatter.Format(logEvent, stringWriter);
+            _asyncLogger.QueueLogEvent(stringWriter.ToString());
         }
 
         /// <summary>
@@ -76,9 +77,9 @@ namespace Serilog.Sinks.InsightOps
 
             if (numWaits <= 0)
             {
-                // Hmm... the queue still had/has some items in it and they probably won't be send downthe wire
+                // Hmm… the queue still had/has some items in it, and they probably won't be sent down the wire
                 // to Insight Ops ... :/
-                Console.WriteLine(" *** Failed to flush the Inisight Ops queue 100%");
+                Console.WriteLine(" *** Failed to flush the Insight Ops queue 100%");
             }
 
             GC.SuppressFinalize(this);
@@ -90,7 +91,7 @@ namespace Serilog.Sinks.InsightOps
         /// logging .. and makes it hard to track down (why this client failed to log).
         /// So - lets be proactive and error this hard, fast and early.
         /// </summary>
-        /// <param name="guid"></param>
+        /// <param name="token"></param>
         private static void ValidateToken(string token)
         {
             if (string.IsNullOrWhiteSpace(token))
@@ -101,7 +102,7 @@ namespace Serilog.Sinks.InsightOps
             var isGuid = Guid.TryParse(token, out var _);
             if (!isGuid)
             {
-                throw new Exception($"Provided Token '{token}' is not a valid Guid.");
+                throw new Exception($"Provided Token '{token}' is not a valid Guid");
             }
         }
     }

@@ -122,7 +122,7 @@ namespace Serilog.Sinks.InsightOps
                 DataHubPort = dataHubPort,
                 LogHostname = logHostname,
                 HostName = hostName,
-                LogID = logId
+                LogId = logId
             };
 
             return InsightOps(sinkConfiguration, settings, formatter, restrictedToMinimumLevel, levelSwitch);
