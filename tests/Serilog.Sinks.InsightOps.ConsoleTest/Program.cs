@@ -22,7 +22,6 @@ namespace Serilog.Sinks.InsightOps.ConsoleTest
             listenerThread.IsBackground = true;
             listenerThread.Start();
 
-            // NOTE: Please replace with your own settings.
             var settings = new InsightOpsSinkSettings
             {
                 //Token = Guid.Empty.ToString(),

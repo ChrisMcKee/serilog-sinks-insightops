@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using BenchmarkDotNet.Attributes;
 using Serilog.Sinks.InsightOps.Rapid7;
+using WaffleGenerator;
 
 namespace Benchmark;
 
@@ -9,24 +12,45 @@ public class AsyncClientBenchmark
 {
     public IEnumerable<object[]> Data()
     {
-        yield return ["Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc"];
-        yield return ["Revelation funded deficit general die juvenile prozac, implied outcome able draws mumbai becomes grave, tables survivor loop fate specialists hydraulic skilled."];
+        for (int i = 0; i < 5; i++)
+        {
+            var text = WaffleEngine.Text(paragraphs: 1, includeHeading: false);
+            yield return [text];
+        }
+    }
+
+    readonly InsightCore.Net.AsyncLogger _classic;
+    readonly AsyncLogger _newAsyncLogger;
+
+    public AsyncClientBenchmark()
+    {
+        var port = new Random().Next(8080, 8089);
+        Thread listenerThread = new Thread(() => FakeRapid7.StartFakeLogEndpoint(port));
+        listenerThread.IsBackground = true;
+        listenerThread.Start();
+
+        _classic = new InsightCore.Net.AsyncLogger();
+        _classic.setDataHubAddr("localhost");
+        _classic.setDataHubPort(port);
+        _classic.setIsUsingDataHub(true);
+
+        _newAsyncLogger = new AsyncLogger();
+        _newAsyncLogger.SetDataHubAddr("localhost");
+        _newAsyncLogger.SetDataHubPort(port);
+        _newAsyncLogger.SetIsUsingDataHub(true);
     }
 
     [Benchmark(Baseline = true)]
     [ArgumentsSource(nameof(Data))]
     public void TestLog(string log)
     {
-        var x = new InsightCore.Net.AsyncLogger();
-        x.AddLine(log);
+        _classic.AddLine(log);
     }
 
     [Benchmark]
     [ArgumentsSource(nameof(Data))]
     public void TestLogNew(string log)
     {
-        var x = new AsyncLogger();
-        x.QueueLogEvent(log);
+        _newAsyncLogger.QueueLogEvent(log);
     }
-
 }
