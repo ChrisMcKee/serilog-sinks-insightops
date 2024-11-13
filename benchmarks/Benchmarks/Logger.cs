@@ -14,7 +14,7 @@ public class LoggerBenchmark
 {
     public IEnumerable<object[]> Data()
     {
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 3; i++)
         {
             var text = WaffleEngine.Text(paragraphs: 1, includeHeading: false);
             yield return [text];
@@ -26,17 +26,12 @@ public class LoggerBenchmark
 
     public LoggerBenchmark()
     {
-        var port = new Random().Next(8080, 8089);
-        Thread listenerThread = new Thread(() => FakeRapid7.StartFakeLogEndpoint(port));
-        listenerThread.IsBackground = true;
-        listenerThread.Start();
-
         _classic = new LoggerConfiguration()
             .MinimumLevel.Debug()
             .WriteTo.InsightOps_3_1_0(new InsightOpsSinkSettings_3_1_0
             {
                 DataHubAddress = "localhost",
-                DataHubPort = port,
+                DataHubPort = Program.FakeLogPort,
                 IsUsingDataHub = true
             })
             .CreateLogger();
@@ -47,7 +42,7 @@ public class LoggerBenchmark
             .WriteTo.InsightOps(new InsightOpsSinkSettings
             {
                 DataHubAddress = "localhost",
-                DataHubPort = 8085,
+                DataHubPort = Program.FakeLogPort,
                 IsUsingDataHub = true
             })
             .CreateLogger();

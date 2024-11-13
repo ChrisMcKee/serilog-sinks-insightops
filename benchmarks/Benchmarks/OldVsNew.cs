@@ -12,7 +12,7 @@ public class AsyncClientBenchmark
 {
     public IEnumerable<object[]> Data()
     {
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 3; i++)
         {
             var text = WaffleEngine.Text(paragraphs: 1, includeHeading: false);
             yield return [text];
@@ -24,19 +24,14 @@ public class AsyncClientBenchmark
 
     public AsyncClientBenchmark()
     {
-        var port = new Random().Next(8080, 8089);
-        Thread listenerThread = new Thread(() => FakeRapid7.StartFakeLogEndpoint(port));
-        listenerThread.IsBackground = true;
-        listenerThread.Start();
-
         _classic = new InsightCore.Net.AsyncLogger();
         _classic.setDataHubAddr("localhost");
-        _classic.setDataHubPort(port);
+        _classic.setDataHubPort(Program.FakeLogPort);
         _classic.setIsUsingDataHub(true);
 
         _newAsyncLogger = new AsyncLogger();
         _newAsyncLogger.SetDataHubAddr("localhost");
-        _newAsyncLogger.SetDataHubPort(port);
+        _newAsyncLogger.SetDataHubPort(Program.FakeLogPort);
         _newAsyncLogger.SetIsUsingDataHub(true);
     }
 
